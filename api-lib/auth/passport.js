@@ -1,13 +1,7 @@
-import {
-  findUserById,
-  findUserByEmail,
-  insertGoogleUser,
-  findUserWithEmailAndPassword,
-} from "@/api-lib/db";
-import passport from "passport";
-import { Strategy as LocalStrategy } from "passport-local";
-import { Strategy as GoogleStrategy } from "passport-google-oauth20";
-import { getMongoDb } from "../mongodb";
+import { findUserForAuth, findUserWithEmailAndPassword } from '@/api-lib/db';
+import passport from 'passport';
+import { Strategy as LocalStrategy } from 'passport-local';
+import { getMongoDb } from '../mongodb';
 
 passport.serializeUser((user, done) => {
   done(null, user._id);
@@ -15,7 +9,7 @@ passport.serializeUser((user, done) => {
 
 passport.deserializeUser((req, id, done) => {
   getMongoDb().then((db) => {
-    findUserById(db, id).then(
+    findUserForAuth(db, id).then(
       (user) => done(null, user),
       (err) => done(err)
     );
@@ -24,32 +18,12 @@ passport.deserializeUser((req, id, done) => {
 
 passport.use(
   new LocalStrategy(
-    { usernameField: "email", passReqToCallback: true },
+    { usernameField: 'email', passReqToCallback: true },
     async (req, email, password, done) => {
       const db = await getMongoDb();
       const user = await findUserWithEmailAndPassword(db, email, password);
       if (user) done(null, user);
-      else done(null, false, { message: "Email or password is incorrect" });
-    }
-  )
-);
-
-passport.use(
-  new GoogleStrategy(
-    {
-      clientID: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: "/api/auth/google/callback",
-    },
-    async (_accessToken, _refreshToken, profile, done) => {
-      const db = await getMongoDb();
-      const user = await findUserByEmail(db, profile._json.email);
-      if (user) done(null, user);
-      else {
-        const newUser = await insertGoogleUser(db, profile);
-        console.log(newUser);
-        done(null, newUser);
-      }
+      else done(null, false, { message: 'Email or password is incorrect' });
     }
   )
 );
