@@ -88,6 +88,11 @@ const Login = () => {
               Forget password
             </ButtonLink>
           </Link>
+          <Link href="api/auth/google" passHref>
+            <ButtonLink type="success" size="large" variant="ghost">
+              Login with Google
+            </ButtonLink>
+          </Link>
         </form>
       </div>
       <div className={styles.footer}>
